@@ -3,11 +3,17 @@
 
 #include <vector>
 #include <limits>
+#include <cmath>
+#include <algorithm>
 
 class PIASolver;
 
 struct Point {
-    float x, y; 
+  float x, y; 
+};
+
+struct PolarPoint {
+  float phi, r;
 };
 
   
@@ -25,6 +31,9 @@ class PIASolver {
     static PIASolverDestroyer destroyer;
     const float accuracy = 0.1f;
     const unsigned int max_misses = 15;
+
+    bool isPointInPolygon(PolarPoint point, std::vector<float> &ranges, float angleInc);
+    float getDistanceOfNearestVertice(std::vector<float> &vertices, float angleInc, PolarPoint point);
   protected:
     PIASolver() { }
     PIASolver( const PIASolver& );
@@ -34,6 +43,6 @@ class PIASolver {
   public:
 
     static PIASolver& getInstance();
-    Point solve(std::vector<float> &vertices, float angleInc);
+    PolarPoint solve(std::vector<float> vertices, float angleInc);
 };
 #endif  // _INCLUDE_PIASOLVER_HPP_
