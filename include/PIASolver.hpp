@@ -30,10 +30,11 @@ class PIASolver {
     static PIASolver* p_instance;
     static PIASolverDestroyer destroyer;
     const float accuracy = 0.1f;
-    const unsigned int max_misses = 15;
+    const unsigned int max_misses = 100;
 
     bool isPointInPolygon(PolarPoint point, std::vector<float> &ranges, float angleInc);
     float getDistanceOfNearestVertice(std::vector<float> &vertices, float angleInc, PolarPoint point);
+    PolarPoint globalFromLocal(PolarPoint globalFrameCenter, PolarPoint pointInFrame);
   protected:
     PIASolver() { }
     PIASolver( const PIASolver& );

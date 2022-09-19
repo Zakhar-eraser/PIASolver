@@ -10,8 +10,8 @@ PIASolver &solver = PIASolver::getInstance();
 void LaserScanCallback(sensor_msgs::LaserScanConstPtr scan) {
     PolarPoint center = solver.solve(scan->ranges, scan->angle_increment);
     geometry_msgs::PointStamped centerMsg;
-    centerMsg.point.x = center.r * cos(center.phi);
-    centerMsg.point.y = center.r * sin(center.phi);
+    centerMsg.point.x = center.r * sin(center.phi);
+    centerMsg.point.y = center.r * cos(center.phi);
     centerMsg.point.z = 0;
     centerMsg.header.frame_id = "base_link";
     centerMsg.header.stamp = ros::Time::now();
