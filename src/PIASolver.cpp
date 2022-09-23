@@ -12,10 +12,10 @@ PolarPoint PIASolver::solve(std::vector<float> vertices, float angleInc) {
         while (misses < max_misses) {
             PolarPoint relTmp;
             relTmp.phi = rand() % (int) (2 * M_PI * 100000) / 100000.0f;
-		    relTmp.r = rand() % (int) (distR * 100000) / 100000.0f;
-            PolarPoint tmp = globalFromLocal(pia, relTmp, distR);
+		    relTmp.r = std::max(rand(), rand()) % (int) (distR * 100000) / 100000.0f;
+            PolarPoint tmp = globalFromLocal(pia, relTmp);
 		    if (isPointInPolygon(tmp, vertices, angleInc)) {
-		    	float dist = getDistanceOfNearestVertice(vertices, angleInc, tmp);
+		    	float dist = getDistanceToNearestEdge(vertices, angleInc, tmp);
 		    	if (dist > maxDist) {
 		    		maxDist = dist;
 		    		pia = tmp;
@@ -25,12 +25,12 @@ PolarPoint PIASolver::solve(std::vector<float> vertices, float angleInc) {
 		    	}
 		    }
         }
-        distR /= 1.4f;
+        distR /= 1.2f;
     }
     return pia;
 }
 
-PolarPoint PIASolver::globalFromLocal(PolarPoint globalFrameCenter, PolarPoint pointInFrame, float max) {
+PolarPoint PIASolver::globalFromLocal(PolarPoint globalFrameCenter, PolarPoint pointInFrame) {
     PolarPoint absFrameCenter;
     float r1 = globalFrameCenter.r;
     float r2 = pointInFrame.r;
@@ -44,16 +44,36 @@ PolarPoint PIASolver::globalFromLocal(PolarPoint globalFrameCenter, PolarPoint p
     return absFrameCenter;
 }
 
-float PIASolver::getDistanceOfNearestVertice(std::vector<float> &vertices, float angleInc, PolarPoint point) {
+float PIASolver::getDistanceToNearestEdge(std::vector<float> &vertices, float angleInc, PolarPoint point) {
     float min = std::numeric_limits<float>::infinity();
-    for (int i = 0; i < vertices.size(); i++) {
-        float dist = sqrtf(point.r * point.r + vertices[i] * vertices[i] -
-            2 * point.r * vertices[i] * cos(point.phi - angleInc * i));
-        if (dist < min) {
-            min = dist;
+    float phi = 0.f;
+    for (int i = 0; i < vertices.size() - 1; i++, phi += angleInc) {
+        float x0 = point.r * cosf(point.phi);
+        float y0 = point.r * sinf(point.phi);
+        float x1 = vertices[i] * cosf(phi);
+        float y1 = vertices[i] * sinf(phi);
+        int ni = (i + 1) % (vertices.size() - 1);
+        float x2 = vertices[ni] * cosf(phi + angleInc);
+        float y2 = vertices[ni] * sinf(phi + angleInc);
+        float r;
+        float deltaX = x2 - x1;
+        float deltaY = y2 - y1;
+        float y = (y0 * deltaY * deltaY + y1 * deltaX * deltaX + (x0 - x1) * deltaX * deltaY) /
+            (deltaY * deltaY + deltaX * deltaX);
+        float x = x1 + (y - y1) * deltaX / deltaY;
+        if ((x > std::min(x1, x2)) && (x < std::max(x1, x2)) &&
+            (y > std::min(y1, y2)) && (y < std::max(y1, y2))) {
+            float xl = x - x0, yl = y - y0;
+            r = xl * xl + yl* yl;
+        } else {
+            float xl1 = x1 - x0, xl2 = x2 - x0;
+            float yl1 = y1 - y0, yl2 = y2 - y0;
+            r = std::min(xl1 * xl1 + yl1 * yl1, xl2 * xl2 + yl2 * yl2);
         }
+        if (min > r)
+                min = r;
     }
-    return min;
+    return sqrtf(min);
 }
 
 bool PIASolver::isPointInPolygon(PolarPoint point, std::vector<float> &ranges, float angleInc) {
