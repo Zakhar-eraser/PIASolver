@@ -12,5 +12,7 @@ include_directories(
     /opt/ros/noetic/include
 )
 
-add_executable(PIA src/main.cpp src/PIASolver.cpp)
-target_link_libraries(PIA ${catkin_LIBRARIES})
+add_library(pia_solver STATIC src/PIASolver.cpp)
+
+add_executable(test src/test.cpp)
+target_link_libraries(test ${catkin_LIBRARIES} pia_solver)

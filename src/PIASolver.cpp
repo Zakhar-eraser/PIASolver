@@ -8,6 +8,35 @@ PolarPoint PIASolver::solve(std::vector<float> vertices, float angleInc) {
     float distR = *std::max_element(vertices.begin(), vertices.end());
     float maxDist = 0;
     while (distR > accuracy) {
+        for (unsigned int i = 1; i <= radDel; i++) {
+            PolarPoint pnt;
+            pnt.r = distR / i;
+            const unsigned int angDel = i * density / radDel;
+            const float inc = 2 * M_PI / angDel;
+            pnt.phi = 0.f;
+            for (unsigned int j = 0; j < angDel; j++, pnt.phi += inc) {
+                PolarPoint tmp = globalFromLocal(pia, pnt);
+                if (isPointInPolygon(tmp, vertices, angleInc)) {
+                    float dist = getDistanceToNearestEdge(vertices, angleInc, tmp);
+                    if (dist > maxDist) {
+                        maxDist = dist;
+                        pia = tmp;
+                    }
+                }
+            }
+        }
+        distR /= 2.f;
+    }
+    return pia;
+}
+
+PolarPoint PIASolver::solveMonteCarlo(std::vector<float> vertices, float angleInc) {
+    PolarPoint pia;
+    pia.phi = 0;
+    pia.r = 0;
+    float distR = *std::max_element(vertices.begin(), vertices.end());
+    float maxDist = 0;
+    while (distR > accuracy) {
         unsigned int misses = 0;
         while (misses < max_misses) {
             PolarPoint relTmp;
